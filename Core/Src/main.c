@@ -32,7 +32,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-*usart1_buff = "A";
+
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -46,7 +46,9 @@ SPI_HandleTypeDef hspi1;
 UART_HandleTypeDef huart1;
 
 /* USER CODE BEGIN PV */
-
+uint8_t uart_rx_buffer[10];
+uint8_t template[1] = { 41 };
+HAL_StatusTypeDef r;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -102,9 +104,18 @@ int main(void)
   while (1)
   {
 	  //HAL_GPIO_TogglePin ( USER_LED_GPIO_Port , USER_LED_Pin );
-	  HAL_UART_Transmit( &huart1 , usart1_buff , 2 , 100 );
+
+	  r = HAL_UART_Receive (&huart1, uart_rx_buffer , sizeof ( uart_rx_buffer ) , 1000 );
+	  for ( uint8_t i = 0 ; i < sizeof ( uart_rx_buffer ) ; i++)
+	  {
+		  if ( template[0] == uart_rx_buffer[i] )
+			  r = HAL_UART_Transmit ( &huart1, template , 1 , 1000 );
+	  }
+
+
+	  //HAL_Delay ( 500 );
 	  	  //Error_Handler ();
-	  HAL_Delay ( 1000 );
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -215,7 +226,7 @@ static void MX_USART1_UART_Init(void)
 
   /* USER CODE END USART1_Init 1 */
   huart1.Instance = USART1;
-  huart1.Init.BaudRate = 115200;
+  huart1.Init.BaudRate = 9600;
   huart1.Init.WordLength = UART_WORDLENGTH_8B;
   huart1.Init.StopBits = UART_STOPBITS_1;
   huart1.Init.Parity = UART_PARITY_NONE;
