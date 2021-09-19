@@ -113,9 +113,9 @@ int main(void)
 		  if ( strncmp ( (const char*)template , (const char*)&uart_rx_buffer[i] , 2 ) == 0 )
 			  r = HAL_UART_Transmit ( &huart2, uart_rx_buffer , (uint16_t)strlen ( (const char*)uart_rx_buffer ) , 1000 );
 	  }
-	  /* USER CODE END WHILE */
+    /* USER CODE END WHILE */
 
-	  /* USER CODE BEGIN 3 */
+    /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
 }
