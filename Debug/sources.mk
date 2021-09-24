@@ -22,5 +22,6 @@ OBJCOPY_BIN :=
 SUBDIRS := \
 Core/Src \
 Core/Startup \
+Drivers/IIS2DLPC \
 Drivers/STM32G0xx_HAL_Driver/Src \
 
