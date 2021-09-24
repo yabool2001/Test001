@@ -24,6 +24,7 @@
 /* USER CODE BEGIN Includes */
 #include <stdio.h>
 #include <string.h>
+#include <iis2dlpc_reg.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -33,7 +34,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-
+#define iis2dlpc_comm hspi1
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -48,9 +49,14 @@ UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
+/* UARTA test part */
 uint8_t uart_rx_buffer[10] = { 65 , 66 , 67 , 68 , 69 , 70 , 71 , 72 , 73 , 0 };
 uint8_t template[2] = { 75 , 79 };
 HAL_StatusTypeDef r;
+/* IIS2DLPC test part */
+static uint8_t whoami = 0;
+uint8_t* whoami_reg = 0x0F ;
+uint8_t whoami2 = 0;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -60,7 +66,8 @@ static void MX_SPI1_Init(void);
 static void MX_USART1_UART_Init(void);
 static void MX_USART2_UART_Init(void);
 /* USER CODE BEGIN PFP */
-
+static int32_t platform_write ( void *handle , uint8_t reg , const uint8_t *bufp , uint16_t len );
+static int32_t platform_read  ( void *handle , uint8_t reg , uint8_t *bufp , uint16_t len );
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -75,7 +82,11 @@ static void MX_USART2_UART_Init(void);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-
+	stmdev_ctx_t dev_ctx;
+	dev_ctx.write_reg = platform_write;
+	dev_ctx.read_reg = platform_read;
+	dev_ctx.handle = &iis2dlpc_comm;
+	iis2dlpc_device_id_get ( &dev_ctx , &whoami );
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -107,12 +118,19 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	  HAL_UART_Transmit ( &huart2, &whoami , 1 , 1000 );
+
 	  r = HAL_UART_Receive (&huart2, uart_rx_buffer , sizeof ( uart_rx_buffer ) , 1000 );
 	  for ( uint8_t i = 0 ; i < sizeof ( uart_rx_buffer ) ; i++)
 	  {
 		  if ( strncmp ( (const char*)template , (const char*)&uart_rx_buffer[i] , 2 ) == 0 )
 			  r = HAL_UART_Transmit ( &huart2, uart_rx_buffer , (uint16_t)strlen ( (const char*)uart_rx_buffer ) , 1000 );
 	  }
+
+	  HAL_GPIO_WritePin	( SPI1_CS_GPIO_Port , SPI1_CS_Pin , GPIO_PIN_RESET );
+	  HAL_SPI_Transmit	( &hspi1 , 0x0F , 1 , 1000 );
+	  HAL_SPI_Receive	( &hspi1 , &whoami2 , 1 , 1000 );
+	  HAL_GPIO_WritePin	( SPI1_CS_GPIO_Port , SPI1_CS_Pin , GPIO_PIN_SET );
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -333,7 +351,23 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-
+static int32_t platform_write ( void *handle , uint8_t reg , const uint8_t *bufp , uint16_t len )
+{
+	HAL_GPIO_WritePin	( SPI1_CS_GPIO_Port , SPI1_CS_Pin , GPIO_PIN_RESET);
+	HAL_SPI_Transmit	( handle , &reg , 1 , 1000 );
+	HAL_SPI_Transmit	( handle , (uint8_t*) bufp , len , 1000 );
+	HAL_GPIO_WritePin	( SPI1_CS_GPIO_Port , SPI1_CS_Pin , GPIO_PIN_SET);
+	return 0;
+}
+static int32_t platform_read ( void *handle , uint8_t reg , uint8_t *bufp , uint16_t len )
+{
+	reg |= 0x80;
+	HAL_GPIO_WritePin	( SPI1_CS_GPIO_Port , SPI1_CS_Pin , GPIO_PIN_RESET );
+	HAL_SPI_Transmit	( handle , &reg , 1 , 1000 );
+	HAL_SPI_Receive		( handle , bufp , len, 1000 );
+	HAL_GPIO_WritePin	( SPI1_CS_GPIO_Port , SPI1_CS_Pin , GPIO_PIN_SET );
+	return 0;
+}
 /* USER CODE END 4 */
 
 /**
