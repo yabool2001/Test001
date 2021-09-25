@@ -55,8 +55,8 @@ uint8_t template[2] = { 75 , 79 };
 HAL_StatusTypeDef r;
 /* IIS2DLPC test part */
 static uint8_t whoami = 0;
-uint8_t* whoami_reg = 0x0F ;
-uint8_t whoami2 = 0;
+static uint8_t whoami_reg[1] = { 0x0F };
+static uint8_t whoami_data[1] = { 0x00 };
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -86,7 +86,7 @@ int main(void)
 	dev_ctx.write_reg = platform_write;
 	dev_ctx.read_reg = platform_read;
 	dev_ctx.handle = &iis2dlpc_comm;
-	iis2dlpc_device_id_get ( &dev_ctx , &whoami );
+
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -118,7 +118,9 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  HAL_UART_Transmit ( &huart2, &whoami , 1 , 1000 );
+	  iis2dlpc_device_id_get ( &dev_ctx , &whoami );
+	  if ( whoami != IIS2DLPC_ID)
+		  HAL_UART_Transmit ( &huart2, &whoami , 1 , 1000 );
 
 	  r = HAL_UART_Receive (&huart2, uart_rx_buffer , sizeof ( uart_rx_buffer ) , 1000 );
 	  for ( uint8_t i = 0 ; i < sizeof ( uart_rx_buffer ) ; i++)
@@ -128,9 +130,12 @@ int main(void)
 	  }
 
 	  HAL_GPIO_WritePin	( SPI1_CS_GPIO_Port , SPI1_CS_Pin , GPIO_PIN_RESET );
-	  HAL_SPI_Transmit	( &hspi1 , 0x0F , 1 , 1000 );
-	  HAL_SPI_Receive	( &hspi1 , &whoami2 , 1 , 1000 );
+	  HAL_Delay ( 50 );
+	  if ( HAL_SPI_TransmitReceive ( &iis2dlpc_comm , whoami_reg , whoami_data , 1 , 1000 ) != HAL_OK )
+		  Error_Handler ();
+	  HAL_Delay ( 50 );
 	  HAL_GPIO_WritePin	( SPI1_CS_GPIO_Port , SPI1_CS_Pin , GPIO_PIN_SET );
+	  HAL_Delay ( 50 );
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
