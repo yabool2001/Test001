@@ -1,5 +1,8 @@
 /* USER CODE BEGIN Header */
 /**
+ * Płytka NUCLEO-G031K8 (STM32G031K8T6U) z STEVAL-MKI191V1 (IIS2DLPC)
+ *
+ *
   ******************************************************************************
   * @file           : main.c
   * @brief          : Main program body
